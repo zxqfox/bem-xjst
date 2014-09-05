@@ -408,3 +408,44 @@ describe('BEMTREE compiler', function() {
   });
 
 });
+
+describe('BEMHTML generate', function() {
+  function fnBody(fn) {
+    return fn.toString().replace(/^function\s*\(\)\s*{|}$/g, '');
+  }
+  // used in enb-bemxjst
+  function test(fn, data, expected, options) {
+    if (!options) options = {};
+    options.exportName = 'BEMHTML';
+
+    var body = fnBody(fn);
+    var tmpl = bemxjst.generate(body, options);
+
+    var ctx = { exports: exports };
+
+    vm.runInNewContext(tmpl, ctx);
+
+    var res = ctx.exports.BEMHTML.apply(data);
+
+    assert.equal(expected, res);
+  }
+
+  it('should not crash on matches without lambdas', function() {
+
+    // bemxjst.generate(body, options)
+    test(function() {
+      block('b1').match(this.ctx.type === "b1")(
+        js()(true),
+        content()('b1')
+      );
+    },
+    [ 'Hello, World!', { block: 'b1', type: 'b1' } ],
+    'Hello, World!<div class="b1 i-bem" onclick="return {&quot;b1&quot;:{}}">b1</div>',
+    {
+      wrap: true,
+      optimize: true,
+      merge: true,
+      cache: false
+    });
+  });
+});
